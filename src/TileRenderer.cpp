@@ -63,7 +63,7 @@ void TileRenderer::render()
     const QSize& size = state.mapSize();
 
     glBindFramebuffer(GL_DRAW_FRAMEBUFFER, context()->defaultFramebufferObject());
-    glClearColor(0.85,0.85,0.85,1);
+    glClearColor(0.85f,0.85f,0.85f,1);
     glViewport(0, 0, size.width(), size.height());
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 

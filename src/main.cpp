@@ -97,7 +97,7 @@ int main(int argc, char **argv)
     config.server = "http://a.tile.openstreetmap.org/";
     config.format = QString("png");
     // San Franciso, CA :)
-    config.center = QVector2D(-122.20877392578124, 37.65175620758778);
+    config.center = QVector2D(-122.20877392578124f, 37.65175620758778f);
     config.min_zoom = 0;
     config.max_zoom = 19; // max for most servers
     config.zoom_level = 10;

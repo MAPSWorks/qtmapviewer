@@ -10,17 +10,17 @@ CONFIG   -= app_bundle
 TEMPLATE = app
 
 SOURCES += \
-    src/main.cpp \
-    src/GLWorker.cpp \
-    src/MapViewer.cpp \
-    src/TileFetcher.cpp \
-    src/TileRenderer.cpp
+    main.cpp \
+    GLWorker.cpp \
+    MapViewer.cpp \
+    TileFetcher.cpp \
+    TileRenderer.cpp
 
 HEADERS += \
-    src/GLWorker.h \
-    src/MapViewer.h \
-    src/TileCache.h \
-    src/TileFetcher.h \
-    src/TileRenderer.h \
-    src/TileTypes.h \
-    src/MapConfig.h 
+    GLWorker.h \
+    MapViewer.h \
+    TileCache.h \
+    TileFetcher.h \
+    TileRenderer.h \
+    TileTypes.h \
+    MapConfig.h
