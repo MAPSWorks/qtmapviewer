@@ -101,7 +101,16 @@ private:
 
     State getState();
 
+    // Helper struct that contains a valid tile image along with
+    // geometry and texture scale/offset values for rendering
     struct TileDrawable {
+        TileDrawable()
+            // Default to unit scale and zero offset
+            : scale(1.f, 1.f),
+              offset(0.f, 0.f),
+              tex_scale(1.f, 1.f),
+              tex_offset(0.f, 0.f) {}
+
         QVector2D scale, offset;
         QVector2D tex_scale, tex_offset;
         TileImage *image;

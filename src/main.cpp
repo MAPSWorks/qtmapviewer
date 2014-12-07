@@ -96,7 +96,7 @@ int main(int argc, char **argv)
     // of config options for servers and zoom levels.
     config.server = "http://a.tile.openstreetmap.org/";
     config.format = QString("png");
-    // San Franciso, CA :)
+    // San Francisco, CA :)
     config.center = QVector2D(-122.20877392578124f, 37.65175620758778f);
     config.min_zoom = 0;
     config.max_zoom = 19; // max for most servers

@@ -78,7 +78,8 @@ void TileRenderer::render()
     tiles.clear();
     requests.clear();
 
-    getTiles(state, tiles, requests);
+    getTiles(state, tiles, requests); // get the visible map tiles!
+
     // Loop over the tile request list (missing from the cache) and 
     // update the request map. If the request index isn't already in the map
     // (which means there is an outstanding request for this tile), emit a
@@ -187,33 +188,34 @@ void TileRenderer::getTiles(const State& state, std::vector<TileDrawable>& tiles
     for (int y = y1; y <= y2; y++) {
         int xx = 0;
         for (int x = x1; x <= x2; x++) {
-            int wx = x;
+            int xwrap = x;
             // More nasty logic for logitudinal wrapping. There is probably
             // a much clearner way to do this, but whatever...
-            if (wx < 0) {
-                while (wx < 0) { wx += pixels; }
-            } else if (wx >= pixels) {
-                wx %= pixels;
+            if (xwrap < 0) {
+                while (xwrap < 0) { xwrap += pixels; }
+            } else if (xwrap >= pixels) {
+                xwrap %= pixels;
             }
             if (y >= 0 && y < pixels) {
-                TileIndex index(state.zoom(), wx, y);
+                TileIndex index(state.zoom(), xwrap, y);
                 TileImage* image;
+                // query the cache for the current tile index
                 if (m_cache.query(index, image)) {
-                    
+                    // tile is in the cache, so use the TileImage directly
                     TileDrawable tile;
-                    tile.scale = QVector2D(1.f,1.f);
                     tile.offset = QVector2D(xoffset + xx * size, yoffset + yy * size);
                     tile.image = image;
-                    tile.tex_scale = QVector2D(1.f, 1.f);
-                    tile.tex_offset = QVector2D(0.f,0.f);
                     tiles.push_back(tile);
                 } else {
+                    // Tile is not in the cache, so try to reuse tiles from above and below
+                    // in the image pyramid
                     if (state.zoomedIn()) {
+                        // If we zoomed in, query for the parent tile and configure the
+                        // drawable to use the correct subregion of its texture
                         TileIndex index(state.zoom() - 1, x/2, y/2);
                         TileImage* image;
                         if (m_cache.query(index, image)) {
                             TileDrawable tile;
-                            tile.scale = QVector2D(1.f,1.f);
                             tile.offset = QVector2D(xoffset + xx * size, yoffset + yy * size);
                             tile.image = image;
                             tile.tex_scale = QVector2D(0.5f, 0.5f);
@@ -221,45 +223,34 @@ void TileRenderer::getTiles(const State& state, std::vector<TileDrawable>& tiles
                             tiles.push_back(tile);
                         }
                     } else if (state.zoomedOut()) {
-                        TileIndex indexTL(state.zoom() + 1, wx*2, y*2);
-                        TileIndex indexTR(state.zoom() + 1, wx*2+1, y*2);
-                        TileIndex indexBR(state.zoom() + 1, wx*2+1, y*2+1);
-                        TileIndex indexBL(state.zoom() + 1, wx*2, y*2+1);
+                        // If we zoomed out, query for the 4 child tiles and modify the
+                        // drawable scale/offset to render them at the proper size/location
+                        TileIndex index_tl(state.zoom() + 1, xwrap * 2,     y * 2);
+                        TileIndex index_tr(state.zoom() + 1, xwrap * 2 + 1, y * 2);
+                        TileIndex index_br(state.zoom() + 1, xwrap * 2 + 1, y * 2 + 1);
+                        TileIndex index_bl(state.zoom() + 1, xwrap * 2,     y * 2 + 1);
                         TileImage* image;
-                        if (m_cache.query(indexTL, image)) {
-                            TileDrawable tile;
-                            tile.scale = QVector2D(0.5f,0.5f);
+                        TileDrawable tile; // used for all four children
+                        tile.scale = QVector2D(0.5f,0.5f); // 1/4th the size
+
+                        if (m_cache.query(index_tl, image)) {
                             tile.offset = QVector2D(xoffset + xx * size, yoffset + yy * size);
                             tile.image = image;
-                            tile.tex_scale = QVector2D(1.f, 1.f);
-                            tile.tex_offset = QVector2D(0.f, 0.f);
                             tiles.push_back(tile);
                         }
-                        if (m_cache.query(indexTR, image)) {
-                            TileDrawable tile;
-                            tile.scale = QVector2D(0.5f,0.5f);
+                        if (m_cache.query(index_tr, image)) {
                             tile.offset = QVector2D(xoffset + xx * size + size / 2, yoffset + yy * size);
                             tile.image = image;
-                            tile.tex_scale = QVector2D(1.f, 1.f);
-                            tile.tex_offset = QVector2D(0.f, 0.f);
                             tiles.push_back(tile);
                         }
-                        if (m_cache.query(indexBR, image)) {
-                            TileDrawable tile;
-                            tile.scale = QVector2D(0.5f,0.5f);
+                        if (m_cache.query(index_br, image)) {
                             tile.offset = QVector2D(xoffset + xx * size + size / 2, yoffset + yy * size + size / 2);
                             tile.image = image;
-                            tile.tex_scale = QVector2D(1.f, 1.f);
-                            tile.tex_offset = QVector2D(0.f, 0.f);
                             tiles.push_back(tile);
                         }
-                        if (m_cache.query(indexBL, image)) {
-                            TileDrawable tile;
-                            tile.scale = QVector2D(0.5f,0.5f);
+                        if (m_cache.query(index_bl, image)) {
                             tile.offset = QVector2D(xoffset + xx * size, yoffset + yy * size + size / 2);
                             tile.image = image;
-                            tile.tex_scale = QVector2D(1.f, 1.f);
-                            tile.tex_offset = QVector2D(0.f, 0.f);
                             tiles.push_back(tile);
                         }
                     }
@@ -267,9 +258,9 @@ void TileRenderer::getTiles(const State& state, std::vector<TileDrawable>& tiles
                 }
             }
             xx++;
-        } // x raster
+        } // x tile index
         yy++;
-    } // y raster
+    } // y tile index
 }
 
 void TileRenderer::tileResponse(TileImage* tile)
